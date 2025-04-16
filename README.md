@@ -142,7 +142,7 @@ image_dataset：（不包含分割与分期分级数据集）
 ## 项目结构
 ```
 project/
-├── 1classify（多进程）.py
+├── 1classify.py
 ├── 1test.py
 ├── 2polygon2mask.py
 ├── 2finetune_medsam copy.py
