@@ -3,6 +3,17 @@
 ---
 
 # 项目 README
+image_dataset：（不包含分割与分期分级数据集）
+通过网盘分享的文件：2021-2023all等2个文件
+链接: https://pan.baidu.com/s/1JzMBOwV-Wi39mmqsCK5tTg?pwd=btps 提取码: btps
+
+模拟用户使用的测试图片：
+通过网盘分享的文件：验证集1 - 所有图片等2个文件
+链接: https://pan.baidu.com/s/16sCCJ4qqtiE1EV17fmvFRw?pwd=psbw 提取码: psbw
+
+分割模块所需预训练模型：
+通过网盘分享的文件：sam_vit_b_01ec64.pth
+链接: https://pan.baidu.com/s/1J7zhRMd3oazKxW56W3jf9Q?pwd=af6x 提取码: af6x
 
 ## 项目概述
 本项目包含多个模块，用于医学图像处理和分析。这些模块涵盖了从图像分类、分割到异常检测和分级的任务。以下是每个模块的简要介绍：
