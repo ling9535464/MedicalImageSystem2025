@@ -7,6 +7,10 @@ image_dataset：（不包含分割与分期分级数据集）
 通过网盘分享的文件：2021-2023all等2个文件
 链接: https://pan.baidu.com/s/1JzMBOwV-Wi39mmqsCK5tTg?pwd=btps 提取码: btps
 
+分割与分级数据集
+通过网盘分享的文件：分期分级等2个文件
+链接: https://pan.baidu.com/s/1x3zfymNA5eE17ITrKy4YoA?pwd=fwkf 提取码: fwkf
+
 模拟用户使用的测试图片：
 通过网盘分享的文件：验证集1 - 所有图片等2个文件
 链接: https://pan.baidu.com/s/16sCCJ4qqtiE1EV17fmvFRw?pwd=psbw 提取码: psbw
