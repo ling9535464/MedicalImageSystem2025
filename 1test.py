@@ -12,6 +12,7 @@ import pandas as pd
 import imagehash
 import pickle
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix  # <<< 新增导入
 
 
 def calculate_phash(file_path):
@@ -201,6 +202,8 @@ def evaluate_model(model_path, test_dir, anomaly_dir=None, batch_size=32):
     plt.close()
     print("Precision-Recall曲线图已保存为 'part1_pr_curve.png'")
 
+
+
     # 创建结果详情，包括预测错误的图片
     results_df = pd.DataFrame({
         '图片路径': all_paths,
@@ -213,9 +216,30 @@ def evaluate_model(model_path, test_dir, anomaly_dir=None, batch_size=32):
     error_df = results_df[~results_df['是否正确']]
     if len(error_df) > 0:
         error_df.to_csv('错误分类图片.csv', index=False, encoding='utf-8-sig')
-        print(f"\n共有 {len(error_df)} 张图片分类错误，详情已保存至 '错误分类图片.csv'")
+        print(f"共有 {len(error_df)} 张图片分类错误，详情已保存至 '错误分类图片.csv'")
     else:
         print("\n所有图片均正确分类！")
+
+
+
+    # <<< 新增：ROC曲线 >>> 
+    fpr, tpr, _ = roc_curve(all_labels, all_probs)
+    roc_auc = roc_auc_score(all_labels, all_probs)
+    plt.figure()
+    plt.plot(fpr, tpr, color='darkorange', lw=2, 
+             label=f'ROC curve (AUC = {roc_auc:.2f})')
+    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False positive rates')
+    plt.ylabel('True positive rates')
+    plt.title('ROC cureve')
+    plt.legend(loc="lower right")
+    plt.savefig('part1_roc_curve.png')
+    plt.close()
+    print("ROC曲线图已保存为 'part1_roc_curve.png'")
+
+
 
     return {
         'f1_overall': f1_score(all_labels, all_preds, average='macro', zero_division=0),
