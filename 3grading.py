@@ -17,6 +17,8 @@ import shutil
 import multiprocessing
 import chardet
 import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, roc_curve, auc, precision_recall_curve, average_precision_score
 
 
 
@@ -198,6 +200,15 @@ val_transform = transforms.Compose([
 
 
 def train_and_evaluate(model, train_loader, val_loader, criterion, optimizer, scheduler, device, num_epochs, fold_idx, early_stopping=None):
+    
+    history = {
+    'train_loss': [],
+    'val_loss': [],
+    'train_f1': [],
+    'val_f1': [],
+    'lr_history': []  # 记录学习率变化
+    }
+
     best_val_f1 = 0.0
     best_model_weights = None
 
@@ -234,6 +245,7 @@ def train_and_evaluate(model, train_loader, val_loader, criterion, optimizer, sc
         all_val_labels = []
 
         val_bar = tqdm(val_loader, desc=f'Fold {fold_idx + 1} - Epoch {epoch + 1}/{num_epochs} [Val]')
+        all_val_scores = []
         with torch.no_grad():
             for images, labels in val_bar:
                 images = images.to(device, non_blocking=True)
@@ -245,6 +257,9 @@ def train_and_evaluate(model, train_loader, val_loader, criterion, optimizer, sc
                 preds = torch.argmax(outputs, dim=1)
                 all_val_preds.extend(preds.cpu().numpy())
                 all_val_labels.extend(labels.cpu().numpy())
+
+                scores = torch.softmax(outputs, dim=1)[:, 1].cpu().numpy()
+                all_val_scores.extend(scores)
 
                 val_loss += loss.item() * images.size(0)
                 val_bar.set_postfix(loss=loss.item())
@@ -269,6 +284,12 @@ def train_and_evaluate(model, train_loader, val_loader, criterion, optimizer, sc
               f"Precision: {val_metrics['precision']:.4f} | "
               f"Recall: {val_metrics['recall']:.4f} | "
               f"F1: {val_metrics['f1']:.4f}")
+        
+        history['train_loss'].append(epoch_train_loss)
+        history['val_loss'].append(epoch_val_loss)
+        history['train_f1'].append(train_metrics['f1'])
+        history['val_f1'].append(val_metrics['f1'])
+        history['lr_history'].append(scheduler.get_last_lr()[0])
 
         # 保存当前折叠的最佳模型
         if val_metrics['f1'] > best_val_f1:
@@ -277,6 +298,11 @@ def train_and_evaluate(model, train_loader, val_loader, criterion, optimizer, sc
             torch.save(model.state_dict(), f"grading/best_model_fold_{fold_idx + 1}.pth")
             print(f"↻ 保存第{fold_idx + 1}折的新最佳模型")
 
+            # 保存最佳 epoch 的验证集结果
+            _plot_confusion_matrix(all_val_labels, all_val_preds, fold_idx)
+            _plot_roc_curve(all_val_labels, all_val_scores, fold_idx)
+            _plot_pr_curve(all_val_labels, all_val_scores, fold_idx)  # 新增此行
+
         # 打印分类报告
         print("\n分类报告（验证集）：")
         print(classification_report(
@@ -284,6 +310,8 @@ def train_and_evaluate(model, train_loader, val_loader, criterion, optimizer, sc
             target_names=['低级', '高级'],
             digits=4
         ))
+
+        _plot_training_curves(history, fold_idx)
 
         # 早停检查
         if early_stopping:
@@ -295,8 +323,96 @@ def train_and_evaluate(model, train_loader, val_loader, criterion, optimizer, sc
     return {
         'best_f1': best_val_f1,
         'final_val_metrics': val_metrics,
-        'best_model_weights': best_model_weights
+        'best_model_weights': best_model_weights,
+        'history': history
     }
+
+def _plot_training_curves(history, fold_idx):
+    """绘制训练曲线"""
+    plt.figure(figsize=(12, 5))
+    
+    # 损失曲线
+    plt.subplot(1, 2, 1)
+    plt.plot(history['train_loss'], label='Train', linewidth=2, color='tab:blue')
+    plt.plot(history['val_loss'], label='Validation', linewidth=2, color='tab:orange')
+    plt.title(f'Fold {fold_idx+1} - Loss Curve', fontsize=14)
+    plt.xlabel('Epoch', fontsize=12)
+    plt.ylabel('Loss', fontsize=12)
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.legend(fontsize=12)
+    
+    # F1分数曲线
+    plt.subplot(1, 2, 2)
+    plt.plot(history['train_f1'], label='Train', linewidth=2, color='tab:green')
+    plt.plot(history['val_f1'], label='Validation', linewidth=2, color='tab:red')
+    plt.title(f'Fold {fold_idx+1} - F1 Score', fontsize=14)
+    plt.xlabel('Epoch', fontsize=12)
+    plt.ylabel('F1', fontsize=12)
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.legend(fontsize=12)
+    
+    plt.tight_layout()
+    plt.savefig(f'grading/fold_{fold_idx+1}_training_curves.png', dpi=300)
+    plt.close()
+
+def _plot_confusion_matrix(y_true, y_pred, fold_idx):
+    """绘制混淆矩阵"""
+    cm = confusion_matrix(y_true, y_pred)
+    plt.figure(figsize=(6, 6))
+    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.title(f'Fold {fold_idx+1} - Confusion Matrix', fontsize=14)
+    plt.colorbar()
+    
+    # 添加文本标签
+    thresh = cm.max() / 2.
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            plt.text(j, i, format(cm[i, j], 'd'),
+                     horizontalalignment="center",
+                     color="white" if cm[i, j] > thresh else "black", fontsize=12)
+    
+    plt.xticks([0, 1], ['Low', 'High'], fontsize=12)
+    plt.yticks([0, 1], ['Low', 'High'], fontsize=12)
+    plt.xlabel('Predicted Labels', fontsize=12)
+    plt.ylabel('True Labels', fontsize=12)
+    plt.savefig(f'grading/fold_{fold_idx+1}_confusion_matrix.png', dpi=300)
+    plt.close()
+
+def _plot_roc_curve(y_true, y_scores, fold_idx):
+    """绘制ROC曲线"""
+    fpr, tpr, _ = roc_curve(y_true, y_scores)
+    roc_auc = auc(fpr, tpr)
+    
+    plt.figure()
+    plt.plot(fpr, tpr, color='tab:purple', lw=2, 
+             label=f'ROC curve (AUC = {roc_auc:.2f})')
+    plt.plot([0, 1], [0, 1], color='tab:gray', lw=2, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate', fontsize=12)
+    plt.ylabel('True Positive Rate', fontsize=12)
+    plt.title(f'Fold {fold_idx+1} - ROC Curve', fontsize=14)
+    plt.legend(loc="lower right", fontsize=12)
+    plt.savefig(f'grading/fold_{fold_idx+1}_roc_curve.png', dpi=300)
+    plt.close()
+    
+
+def _plot_pr_curve(y_true, y_scores, fold_idx):
+    """绘制PR曲线"""
+    precision, recall, _ = precision_recall_curve(y_true, y_scores)
+    average_precision = average_precision_score(y_true, y_scores)
+    
+    plt.figure()
+    plt.plot(recall, precision, color='tab:cyan', lw=2, 
+             label=f'PR curve (AP = {average_precision:.2f})')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('Recall', fontsize=12)
+    plt.ylabel('Precision', fontsize=12)
+    plt.title(f'Fold {fold_idx+1} - PR Curve', fontsize=14)
+    plt.legend(loc="lower left", fontsize=12)
+    plt.savefig(f'grading/fold_{fold_idx+1}_pr_curve.png', dpi=300)
+    plt.close()
 
 def main():
     set_seed(42)
@@ -453,6 +569,29 @@ def main():
     results_df = pd.concat([results_df, avg_row])
     results_df.to_csv('grading/kfold_results.csv', index=False)
     print("已将K折交叉验证结果保存到 kfold_results.csv")
+
+    # 新增全局可视化
+    plt.figure()
+    for i, res in enumerate(fold_results):
+        plt.plot(res['history']['val_f1'], label=f'Fold {i+1}', color=f'C{i}')
+    plt.title('Validation Set F1 Scores for All Folds', fontsize=14)
+    plt.xlabel('Epoch', fontsize=12)
+    plt.ylabel('F1 Score', fontsize=12)
+    plt.legend(fontsize=12)
+    plt.savefig('grading/all_folds_f1.png', dpi=300)
+    plt.close()
+
+    # 学习率变化曲线
+    plt.figure()
+    for i, res in enumerate(fold_results):
+        plt.plot(res['history']['lr_history'], label=f'Fold {i+1}', color=f'C{i}')
+    plt.title('Learning Rate Curves for All Folds', fontsize=14)
+    plt.xlabel('Epoch', fontsize=12)
+    plt.ylabel('Learning Rate', fontsize=12)
+    plt.yscale('log')
+    plt.legend(fontsize=12)
+    plt.savefig('grading/lr_curves.png', dpi=300)
+    plt.close()
     
 if __name__ == '__main__':
     multiprocessing.freeze_support()
