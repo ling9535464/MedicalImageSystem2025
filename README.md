@@ -15,30 +15,38 @@ image_dataset：（不包含分割与分期分级数据集）
 通过网盘分享的文件：验证集1 - 所有图片等2个文件
 链接: https://pan.baidu.com/s/16sCCJ4qqtiE1EV17fmvFRw?pwd=psbw 提取码: psbw
 
+test2中会用到的验证集2的图片：
+通过网盘分享的文件：验证集2 - 所有图片
+链接: https://pan.baidu.com/s/1RlzZ3-VYw_BFWFEGYV0LwA?pwd=v7da 提取码: v7da
+
 分割模块所需预训练模型：
 通过网盘分享的文件：sam_vit_b_01ec64.pth
 链接: https://pan.baidu.com/s/1J7zhRMd3oazKxW56W3jf9Q?pwd=af6x 提取码: af6x
+
+---
 
 ## 项目概述
 本项目包含多个模块，用于医学图像处理和分析。这些模块涵盖了从图像分类、分割到异常检测和分级的任务。以下是每个模块的简要介绍：
 
 1. **良恶性分类模块**：
-   - `1classify.py`：训练用于良恶性分类的模型。
+   - `1classify_multiproceed.py`：训练用于良恶性分类的模型。
    - `1test.py`：测试已训练的分类模型。
+   - `1test2.py`：对新数据集进行预测并保存结果。
 
 2. **肿瘤分割模块**：
    - `2polygon2mask.py`：从标注图像中提取掩码，用于训练分割模型。
-   - `2finetune_medsam copy.py`：微调 SAM 模型以进行医学图像分割。
+   - `2finetune_medsam.py`：微调 SAM 模型以进行医学图像分割。
    - `2run_medsam_anomaly.py`：运行微调后的 SAM 模型进行异常区域分割。
 
 3. **肿瘤分级分期模块**：
-   - `3grading.py`：实现肿瘤分级分期的一部分代码。
+   - `3grading.py`：实现肿瘤分级分期的代码。
 
 ## 模块 1：良恶性分类模块
 
 ### 功能
 - 使用 EfficientNet 模型对医学图像进行分类，判断图像是否包含异常（良性或恶性）。
-- 支持 K 折交叉验证、数据增强和早停机制。
+- 支持 K 折交叉验证、数据增强、加权采样和早停机制。
+- 提供详细的训练和验证指标可视化。
 
 ### 使用方法
 1. 确保安装了以下依赖：
@@ -49,7 +57,7 @@ image_dataset：（不包含分割与分期分级数据集）
    - `scikit-learn`
    - `tqdm`
    - `Pillow`
-   - `imagehash`
+   - `matplotlib`
 
 2. 配置路径：
    - `image_dataset/用于训练的所有图片`：包含所有训练图像的文件夹。
@@ -57,7 +65,7 @@ image_dataset：（不包含分割与分期分级数据集）
 
 3. 训练模型：
    ```bash
-   python 1classify.py
+   python 1classify_multiproceed.py
    ```
 
 4. 测试模型：
@@ -65,16 +73,23 @@ image_dataset：（不包含分割与分期分级数据集）
    python 1test.py
    ```
 
+5. 对新数据集进行预测：
+   ```bash
+   python 1test2.py
+   ```
+
 ### 输出
 - 分类模型保存在 `classify/best_model_final.pth`。
 - K 折交叉验证结果保存在 `classify/kfold_results.csv`。
-- 测试结果保存在 `错误分类图片.csv` 和 `part1_pr_curve.png`。
+- 测试结果保存在 `所有图片分类结果.csv` 和 `part1_pr_curve.png`。
+- 预测结果保存在 `验证集2预测结果.csv`。
+- 训练过程的可视化图表保存在 `classify/` 文件夹中。
 
 ## 模块 2：肿瘤分割模块
 
 ### 功能
 - **2polygon2mask.py**：从标注图像中提取掩码，用于训练分割模型。
-- **2finetune_medsam copy.py**：微调 SAM 模型以进行医学图像分割。
+- **2finetune_medsam.py**：微调 SAM 模型以进行医学图像分割。
 - **2run_medsam_anomaly.py**：运行微调后的 SAM 模型进行异常区域分割。
 
 ### 使用方法
@@ -97,7 +112,7 @@ image_dataset：（不包含分割与分期分级数据集）
 
 4. 微调 SAM 模型：
    ```bash
-   python 2finetune_medsam copy.py
+   python 2finetune_medsam.py
    ```
 
 5. 运行分割模型：
@@ -115,6 +130,7 @@ image_dataset：（不包含分割与分期分级数据集）
 ### 功能
 - 使用 EfficientNet 模型对医学图像进行分级，判断异常的严重程度。
 - 支持 K 折交叉验证和早停机制。
+- 提供详细的训练和验证指标可视化。
 
 ### 使用方法
 1. 确保安装了以下依赖：
@@ -125,6 +141,7 @@ image_dataset：（不包含分割与分期分级数据集）
    - `scikit-learn`
    - `tqdm`
    - `Pillow`
+   - `matplotlib`
 
 2. 配置路径：
    - `image_dataset/分期分级/分级部分数据.xlsx`：包含图像分级信息的 Excel 文件。
@@ -138,14 +155,16 @@ image_dataset：（不包含分割与分期分级数据集）
 ### 输出
 - 分级模型保存在 `grading/best_model_final.pth`。
 - K 折交叉验证结果保存在 `grading/kfold_results.csv`。
+- 训练过程的可视化图表保存在 `grading/` 文件夹中。
 
 ## 项目结构
 ```
 project/
-├── 1classify.py
+├── 1classify_multiproceed.py
 ├── 1test.py
+├── 1test2.py
 ├── 2polygon2mask.py
-├── 2finetune_medsam copy.py
+├── 2finetune_medsam.py
 ├── 2run_medsam_anomaly.py
 ├── 3grading.py
 ├── image_dataset/
@@ -160,6 +179,9 @@ project/
 ├── classify/
 │   ├── best_model_final.pth
 │   ├── kfold_results.csv
+│   ├── fold_1_training_curves.png
+│   ├── fold_1_confusion_matrix.png
+│   └── ...
 ├── logs/
 │   ├── best_model_final.pth
 ├── results/
@@ -167,8 +189,10 @@ project/
 ├── grading/
 │   ├── best_model_final.pth
 │   ├── kfold_results.csv
+│   ├── fold_1_training_curves.png
+│   ├── fold_1_confusion_matrix.png
+│   └── ...
 ```
-
 
 
 ---
