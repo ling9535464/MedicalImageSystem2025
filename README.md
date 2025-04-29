@@ -29,7 +29,7 @@ test2中会用到的验证集2的图片：
 本项目包含多个模块，用于医学图像处理和分析。这些模块涵盖了从图像分类、分割到异常检测和分级的任务。以下是每个模块的简要介绍：
 
 1. **良恶性分类模块**：
-   - `1classify_multiproceed.py`：训练用于良恶性分类的模型。
+   - `1classify.py`：训练用于良恶性分类的模型。（建议使用multiproceed版本）
    - `1test.py`：测试已训练的分类模型。
    - `1test2.py`：对新数据集进行预测并保存结果。
 
@@ -160,7 +160,7 @@ test2中会用到的验证集2的图片：
 ## 项目结构
 ```
 project/
-├── 1classify_multiproceed.py
+├── 1classify.py
 ├── 1test.py
 ├── 1test2.py
 ├── 2polygon2mask.py
