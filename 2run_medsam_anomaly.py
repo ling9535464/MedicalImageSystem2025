@@ -20,9 +20,9 @@ MODEL_TYPE = "vit_b"
 # 是否使用交互式选择点 (True/False)
 INTERACTIVE_MODE = False
 # 输入目录
-INPUT_DIR = "./image_dataset/用于训练的异常图片"
+INPUT_DIR = "./abnormal_images_validation2"
 # 输出目录
-OUTPUT_DIR = "./results"
+OUTPUT_DIR = "./results_validation2"
 
 
 # ===============================================
@@ -458,7 +458,7 @@ def main(): #对一整个文件夹的处理
             img_data = np.fromfile(image_path, dtype=np.uint8)
             image = cv2.imdecode(img_data, cv2.IMREAD_COLOR)
             h, w = image.shape[:2]
-            points = [(w // 2, h // 2, 1)]  # 默认使用中心点
+            points = [(512, 512, 1)]  # 默认使用中心点
 
             # 处理图像
             base_name = os.path.splitext(os.path.basename(image_path))[0]
