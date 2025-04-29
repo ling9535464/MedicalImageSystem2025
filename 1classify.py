@@ -57,72 +57,32 @@ def calculate_metrics(y_true, y_pred):
     }
 
 
-# 自定义数据集类（增加异常处理）
-def calculate_phash(file_path):
-    """计算图片的感知哈希值"""
-    with Image.open(file_path) as img:
-        return imagehash.phash(img)
-
-def hamming_distance(hash1, hash2):
-    """计算两个哈希值之间的汉明距离"""
-    return bin(hash1 ^ hash2).count('1')
-
 class MedicalDataset(Dataset):
-    def __init__(self, all_dir, anomaly_dir, transform=None, similarity_threshold=5, cache_dir='cache_train'): #一般图片都是完全一致，阈值设置小一点应该没问题
+    def __init__(self, all_dir, anomaly_dir, transform=None):
         self.transform = transform
         self.samples = []
-        self.similarity_threshold = similarity_threshold
-        self.cache_dir = cache_dir
 
-        # 确保缓存目录存在
-        os.makedirs(cache_dir, exist_ok=True)
+        # 收集异常文件名
+        anomaly_files = []
+        for root, _, files in os.walk(anomaly_dir):
+            for file in files:
+                if file.lower().endswith(('.png', '.jpg', '.jpeg')):
+                    anomaly_files.append(os.path.join(root, file.lower()).replace(f'{anomaly_dir}\\', ''))
 
-        # 加载或计算all文件夹中所有图片的感知哈希值
-        all_hashes_cache_path = os.path.join(cache_dir, 'all_hashes.pkl')
-        if os.path.exists(all_hashes_cache_path):
-            with open(all_hashes_cache_path, 'rb') as f:
-                all_hashes = pickle.load(f)
-        else:
-            all_hashes = {}
-            for root, _, files in os.walk(all_dir):
-                for file in files:
-                    if file.lower().endswith(('.png', '.jpg', '.jpeg')):
-                        file_path = os.path.join(root, file)
-                        try:
-                            file_hash = calculate_phash(file_path)
-                            all_hashes[file_path] = file_hash
-                        except (IOError, OSError, Image.DecompressionBombError) as e:
-                            print(f"跳过损坏文件: {file_path}, 错误: {str(e)}")
-            with open(all_hashes_cache_path, 'wb') as f:
-                pickle.dump(all_hashes, f)
-
-        # 加载或计算anomaly文件夹中所有图片的感知哈希值
-        anomaly_hashes_cache_path = os.path.join(cache_dir, 'anomaly_hashes.pkl')
-        if os.path.exists(anomaly_hashes_cache_path):
-            with open(anomaly_hashes_cache_path, 'rb') as f:
-                anomaly_hashes = pickle.load(f)
-        else:
-            anomaly_hashes = []
-            for root, _, files in os.walk(anomaly_dir):
-                for file in files:
-                    if file.lower().endswith(('.png', '.jpg', '.jpeg')):
-                        file_path = os.path.join(root, file)
-                        try:
-                            file_hash = calculate_phash(file_path)
-                            anomaly_hashes.append(file_hash)
-                        except (IOError, OSError, Image.DecompressionBombError) as e:
-                            print(f"跳过损坏文件: {file_path}, 错误: {str(e)}")
-            with open(anomaly_hashes_cache_path, 'wb') as f:
-                pickle.dump(anomaly_hashes, f)
-
-        # 遍历all文件夹中的图片并标记
-        for file_path, file_hash in all_hashes.items():
-            label = 0  # 默认为正常样本
-            for anomaly_hash in anomaly_hashes:
-                if hamming_distance(file_hash, anomaly_hash) <= self.similarity_threshold:
-                    label = 1  # 如果与任意异常图片足够相似，则标记为异常
-                    break
-            self.samples.append((file_path, label))
+        # 遍历所有图片并标记
+        for root, _, files in os.walk(all_dir):
+            for file in files:
+                if file.lower().endswith(('.png', '.jpg', '.jpeg')):
+                    file_path = os.path.join(root, file)
+                    try:
+                        # 验证图片可读性
+                        with Image.open(file_path) as img:
+                            img.verify()
+                        label = 1 if os.path.join(root, file.lower()).replace(f'{all_dir}\\',
+                                                                              '') in anomaly_files else 0
+                        self.samples.append((file_path, label))
+                    except (IOError, OSError, Image.DecompressionBombError) as e:
+                        print(f"跳过损坏文件: {file_path}, 错误: {str(e)}")
 
         # 统计类别分布
         labels = [s[1] for s in self.samples]
