@@ -24,7 +24,7 @@ def hamming_distance(hash1, hash2):
     return hash1 - hash2
 
 # 测试集数据加载类
-class TestDataset(Dataset):
+class TestDataset(Dataset): #由于测试集的文件名混乱，无法使用训练集同款标签设置，故使用汉明距离代替
     def __init__(self, all_dir, anomaly_dir, transform=None, similarity_threshold=0, cache_dir='cache_test'): #一般图片都是完全一致，阈值设置小一点应该没问题
         self.transform = transform
         self.samples = []
@@ -166,6 +166,29 @@ def evaluate_model(model_path, test_dir, anomaly_dir=None, batch_size=32):
     )
     print(report)
 
+    # 生成混淆矩阵
+    cm = confusion_matrix(all_labels, all_preds)
+    plt.figure(figsize=(6, 6))
+    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.title('Confusion Matrix', fontsize=14)
+    plt.colorbar()
+
+    # 添加文本标签
+    thresh = cm.max() / 2.
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            plt.text(j, i, format(cm[i, j], 'd'),
+                    horizontalalignment="center",
+                    color="white" if cm[i, j] > thresh else "black", fontsize=12)
+
+    plt.xticks([0, 1], ['Normal', 'Anomaly'], fontsize=12)
+    plt.yticks([0, 1], ['Normal', 'Anomaly'], fontsize=12)
+    plt.xlabel('Predicted Labels', fontsize=12)
+    plt.ylabel('True Labels', fontsize=12)
+    plt.savefig('confusion_matrix.png', dpi=300)
+    plt.close()
+    print("混淆矩阵图已保存为 'confusion_matrix.png'")
+
     # 计算每个类别的F1分数
     f1_normal = f1_score(
         [1 if label == 0 else 0 for label in all_labels],
@@ -191,7 +214,7 @@ def evaluate_model(model_path, test_dir, anomaly_dir=None, batch_size=32):
 
     # 绘制Precision-Recall曲线图
     plt.figure()
-    plt.plot(recall, precision, color='darkorange', lw=2, label=f'PR curve (area = {pr_auc:.2f})')
+    plt.plot(recall, precision, color='tab:cyan', lw=2, label=f'PR curve (area = {pr_auc:.2f})')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
     plt.xlabel('Recall')
@@ -202,33 +225,13 @@ def evaluate_model(model_path, test_dir, anomaly_dir=None, batch_size=32):
     plt.close()
     print("Precision-Recall曲线图已保存为 'part1_pr_curve.png'")
 
-
-
-    # 创建结果详情，包括预测错误的图片
-    results_df = pd.DataFrame({
-        '图片路径': all_paths,
-        '真实标签': ['正常' if label == 0 else '异常' for label in all_labels],
-        '预测标签': ['正常' if pred == 0 else '异常' for pred in all_preds],
-        '是否正确': [pred == label for pred, label in zip(all_preds, all_labels)]
-    })
-
-    # 保存错误分类的图片信息
-    error_df = results_df[~results_df['是否正确']]
-    if len(error_df) > 0:
-        error_df.to_csv('错误分类图片.csv', index=False, encoding='utf-8-sig')
-        print(f"共有 {len(error_df)} 张图片分类错误，详情已保存至 '错误分类图片.csv'")
-    else:
-        print("\n所有图片均正确分类！")
-
-
-
     # <<< 新增：ROC曲线 >>> 
     fpr, tpr, _ = roc_curve(all_labels, all_probs)
     roc_auc = roc_auc_score(all_labels, all_probs)
     plt.figure()
-    plt.plot(fpr, tpr, color='darkorange', lw=2, 
+    plt.plot(fpr, tpr, color='tab:purple', lw=2, 
              label=f'ROC curve (AUC = {roc_auc:.2f})')
-    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    plt.plot([0, 1], [0, 1], color='tab:gray', lw=2, linestyle='--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
     plt.xlabel('False positive rates')
@@ -239,6 +242,35 @@ def evaluate_model(model_path, test_dir, anomaly_dir=None, batch_size=32):
     plt.close()
     print("ROC曲线图已保存为 'part1_roc_curve.png'")
 
+    
+
+    # # 创建结果详情，包括预测错误的图片
+    # results_df = pd.DataFrame({
+    #     '图片路径': all_paths,
+    #     '真实标签': ['正常' if label == 0 else '异常' for label in all_labels],
+    #     '预测标签': ['正常' if pred == 0 else '异常' for pred in all_preds],
+    #     '是否正确': [pred == label for pred, label in zip(all_preds, all_labels)]
+    # })
+
+    # # 保存错误分类的图片信息
+    # error_df = results_df[~results_df['是否正确']]
+    # if len(error_df) > 0:
+    #     error_df.to_csv('错误分类图片.csv', index=False, encoding='utf-8-sig')
+    #     print(f"共有 {len(error_df)} 张图片分类错误，详情已保存至 '错误分类图片.csv'")
+    # else:
+    #     print("\n所有图片均正确分类！")
+
+    # 创建结果详情，包括所有图片的分类结果
+    results_df = pd.DataFrame({
+        '图片路径': all_paths,
+        '真实标签': ['正常' if label == 0 else '异常' for label in all_labels],
+        '预测标签': ['正常' if pred == 0 else '异常' for pred in all_preds],
+        '是否正确': [pred == label for pred, label in zip(all_preds, all_labels)]
+    })
+
+    # 保存所有图片的分类结果到CSV文件
+    results_df.to_csv('所有图片分类结果.csv', index=False, encoding='utf-8-sig')
+    print("所有图片的分类结果已保存至 '所有图片分类结果.csv'")
 
 
     return {
