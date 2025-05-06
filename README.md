@@ -3,45 +3,27 @@
 ---
 
 # 项目 README
-image_dataset：（不包含分割与分期分级数据集）
-通过网盘分享的文件：2021-2023all等2个文件
-链接: https://pan.baidu.com/s/1JzMBOwV-Wi39mmqsCK5tTg?pwd=btps 提取码: btps
+项目所需数据集与SAM预训练模型：
 
-分割与分级数据集
-通过网盘分享的文件：分期分级等2个文件
-链接: https://pan.baidu.com/s/1x3zfymNA5eE17ITrKy4YoA?pwd=fwkf 提取码: fwkf
-
-模拟用户使用的测试图片：
-通过网盘分享的文件：验证集1 - 所有图片等2个文件
-链接: https://pan.baidu.com/s/16sCCJ4qqtiE1EV17fmvFRw?pwd=psbw 提取码: psbw
-
-test2中会用到的验证集2的图片：
-通过网盘分享的文件：验证集2 - 所有图片
-链接: https://pan.baidu.com/s/1RlzZ3-VYw_BFWFEGYV0LwA?pwd=v7da 提取码: v7da
-
-分割模块所需预训练模型：
-通过网盘分享的文件：sam_vit_b_01ec64.pth
-链接: https://pan.baidu.com/s/1J7zhRMd3oazKxW56W3jf9Q?pwd=af6x 提取码: af6x
 
 ---
 
 ## 项目概述
-本项目包含多个模块，用于医学图像处理和分析。这些模块涵盖了从图像分类、分割到异常检测和分级的任务。以下是每个模块的简要介绍：
+本项目包含多个模块，用于医学图像的处理和分析，涵盖图像分类、分割、异常检测以及分级分期等任务。以下是每个模块的简要介绍：
 
-1. **良恶性分类模块**：
-   - `1classify.py`：训练用于良恶性分类的模型。（建议使用multiproceed版本）
-   - `1test.py`：测试已训练的分类模型。
-   - `1test2.py`：对新数据集进行预测并保存结果。
+1. **图像分类模块**：
+   - `1classify.py`：训练用于图像分类的模型，判断图像是否包含异常（良性或恶性）。
+   - `1test.py`：测试已训练的分类模型，评估其在测试集上的性能。
 
-2. **肿瘤分割模块**：
+2. **图像分割模块**：
    - `2polygon2mask.py`：从标注图像中提取掩码，用于训练分割模型。
    - `2finetune_medsam.py`：微调 SAM 模型以进行医学图像分割。
    - `2run_medsam_anomaly.py`：运行微调后的 SAM 模型进行异常区域分割。
 
-3. **肿瘤分级分期模块**：
-   - `3grading.py`：实现肿瘤分级分期的代码。
+3. **分级分期模块**：
+   - `3grading.py`：实现肿瘤分级与分子分型的代码，用于判断异常的严重程度。
 
-## 模块 1：良恶性分类模块
+## 模块 1：图像分类模块
 
 ### 功能
 - 使用 EfficientNet 模型对医学图像进行分类，判断图像是否包含异常（良性或恶性）。
@@ -49,7 +31,8 @@ test2中会用到的验证集2的图片：
 - 提供详细的训练和验证指标可视化。
 
 ### 使用方法
-1. 确保安装了以下依赖：
+1. **依赖安装**：
+   确保安装了以下依赖：
    - `torch`
    - `torchvision`
    - `numpy`
@@ -59,33 +42,27 @@ test2中会用到的验证集2的图片：
    - `Pillow`
    - `matplotlib`
 
-2. 配置路径：
+2. **路径配置**：
    - `image_dataset/用于训练的所有图片`：包含所有训练图像的文件夹。
    - `image_dataset/用于训练的异常图片`：包含异常图像的文件夹。
 
-3. 训练模型：
+3. **训练模型**：
    ```bash
-   python 1classify_multiproceed.py
+   python 1classify.py
    ```
 
-4. 测试模型：
+4. **测试模型**：
    ```bash
    python 1test.py
-   ```
-
-5. 对新数据集进行预测：
-   ```bash
-   python 1test2.py
    ```
 
 ### 输出
 - 分类模型保存在 `classify/best_model_final.pth`。
 - K 折交叉验证结果保存在 `classify/kfold_results.csv`。
-- 测试结果保存在 `所有图片分类结果.csv` 和 `part1_pr_curve.png`。
-- 预测结果保存在 `验证集2预测结果.csv`。
+- 测试结果保存在 `valset/valset_所有图片分类结果.csv`。
 - 训练过程的可视化图表保存在 `classify/` 文件夹中。
 
-## 模块 2：肿瘤分割模块
+## 模块 2：图像分割模块
 
 ### 功能
 - **2polygon2mask.py**：从标注图像中提取掩码，用于训练分割模型。
@@ -93,7 +70,8 @@ test2中会用到的验证集2的图片：
 - **2run_medsam_anomaly.py**：运行微调后的 SAM 模型进行异常区域分割。
 
 ### 使用方法
-1. 确保安装了以下依赖：
+1. **依赖安装**：
+   确保安装了以下依赖：
    - `torch`
    - `torchvision`
    - `numpy`
@@ -101,21 +79,21 @@ test2中会用到的验证集2的图片：
    - `matplotlib`
    - `segment-anything`
 
-2. 配置路径：
+2. **路径配置**：
    - `image_dataset/分割/原图`：包含原始图像的文件夹。
    - `image_dataset/分割/标注分割`：包含标注图像的文件夹。
 
-3. 生成掩码：
+3. **生成掩码**：
    ```bash
    python 2polygon2mask.py
    ```
 
-4. 微调 SAM 模型：
+4. **微调 SAM 模型**：
    ```bash
    python 2finetune_medsam.py
    ```
 
-5. 运行分割模型：
+5. **运行分割模型**：
    ```bash
    python 2run_medsam_anomaly.py
    ```
@@ -125,7 +103,7 @@ test2中会用到的验证集2的图片：
 - 分割模型保存在 `logs/best_model_final.pth`。
 - 分割结果保存在 `results` 文件夹中。
 
-## 模块 3：肿瘤分级分期模块
+## 模块 3：分级分期模块
 
 ### 功能
 - 使用 EfficientNet 模型对医学图像进行分级，判断异常的严重程度。
@@ -133,7 +111,8 @@ test2中会用到的验证集2的图片：
 - 提供详细的训练和验证指标可视化。
 
 ### 使用方法
-1. 确保安装了以下依赖：
+1. **依赖安装**：
+   确保安装了以下依赖：
    - `torch`
    - `torchvision`
    - `numpy`
@@ -143,11 +122,11 @@ test2中会用到的验证集2的图片：
    - `Pillow`
    - `matplotlib`
 
-2. 配置路径：
-   - `image_dataset/分期分级/分级部分数据.xlsx`：包含图像分级信息的 Excel 文件。
+2. **路径配置**：
+   - `image_dataset/分期分级/测试集-肿瘤分子分型标注.xlsx`：包含图像分级信息的 Excel 文件。
    - `image_dataset/用于训练的异常图片`：包含异常图像的文件夹。
 
-3. 运行脚本：
+3. **运行脚本**：
    ```bash
    python 3grading.py
    ```
@@ -155,14 +134,13 @@ test2中会用到的验证集2的图片：
 ### 输出
 - 分级模型保存在 `grading/best_model_final.pth`。
 - K 折交叉验证结果保存在 `grading/kfold_results.csv`。
-- 训练过程的可视化图表保存在 `grading/` 文件夹中。
+- 各个标签训练过程的可视化图表保存在 `grading/` 文件夹中。
 
 ## 项目结构
 ```
 project/
-├── 1classify.py
+├── 1classify_multiproceed.py
 ├── 1test.py
-├── 1test2.py
 ├── 2polygon2mask.py
 ├── 2finetune_medsam.py
 ├── 2run_medsam_anomaly.py
@@ -175,7 +153,7 @@ project/
 │   │   ├── 标注分割/
 │   │   ├── 掩码分割/
 │   ├── 分期分级/
-│   │   ├── 分级部分数据.xlsx
+│   │   ├── 测试集-肿瘤分子分型标注.xlsx
 ├── classify/
 │   ├── best_model_final.pth
 │   ├── kfold_results.csv
@@ -187,12 +165,13 @@ project/
 ├── results/
 │   ├── 分割结果.png
 ├── grading/
-│   ├── best_model_final.pth
-│   ├── kfold_results.csv
-│   ├── fold_1_training_curves.png
-│   ├── fold_1_confusion_matrix.png
+│   ├── Grade/
+│   ├── HER-2/
 │   └── ...
 ```
+
+---
+
 
 
 ---
