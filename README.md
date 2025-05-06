@@ -4,7 +4,8 @@
 
 # 项目 README
 项目所需数据集与SAM预训练模型：
-
+通过网盘分享的文件：项目所需数据集与SAM预训练模型.zip
+链接: https://pan.baidu.com/s/1cIBdUT53uCPyLIUxSsaElg?pwd=ggcs 提取码: ggcs
 
 ---
 
