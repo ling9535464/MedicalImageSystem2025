@@ -185,9 +185,9 @@ def evaluate_model(model_path, test_dir, anomaly_dir=None, batch_size=32):
     plt.yticks([0, 1], ['Normal', 'Anomaly'], fontsize=12)
     plt.xlabel('Predicted Labels', fontsize=12)
     plt.ylabel('True Labels', fontsize=12)
-    plt.savefig('confusion_matrix.png', dpi=300)
+    plt.savefig('valset/valset2_confusion_matrix.png', dpi=300)
     plt.close()
-    print("混淆矩阵图已保存为 'confusion_matrix.png'")
+    print("混淆矩阵图已保存为 'valset/valset2_confusion_matrix.png'")
 
     # 计算每个类别的F1分数
     f1_normal = f1_score(
@@ -221,9 +221,9 @@ def evaluate_model(model_path, test_dir, anomaly_dir=None, batch_size=32):
     plt.ylabel('Precision')
     plt.title('Precision-Recall Curve')
     plt.legend(loc="best")
-    plt.savefig('part1_pr_curve.png')
+    plt.savefig('valset/valset2_pr_curve.png')
     plt.close()
-    print("Precision-Recall曲线图已保存为 'part1_pr_curve.png'")
+    print("Precision-Recall曲线图已保存为 'valset/valset2_pr_curve.png'")
 
     # <<< 新增：ROC曲线 >>> 
     fpr, tpr, _ = roc_curve(all_labels, all_probs)
@@ -238,9 +238,9 @@ def evaluate_model(model_path, test_dir, anomaly_dir=None, batch_size=32):
     plt.ylabel('True positive rates')
     plt.title('ROC cureve')
     plt.legend(loc="lower right")
-    plt.savefig('part1_roc_curve.png')
+    plt.savefig('valset/valset2_roc_curve.png')
     plt.close()
-    print("ROC曲线图已保存为 'part1_roc_curve.png'")
+    print("ROC曲线图已保存为 'valset/valset2_roc_curve.png'")
 
     
 
@@ -269,8 +269,8 @@ def evaluate_model(model_path, test_dir, anomaly_dir=None, batch_size=32):
     })
 
     # 保存所有图片的分类结果到CSV文件
-    results_df.to_csv('所有图片分类结果.csv', index=False, encoding='utf-8-sig')
-    print("所有图片的分类结果已保存至 '所有图片分类结果.csv'")
+    results_df.to_csv('valset/valset2_所有图片分类结果.csv', index=False, encoding='utf-8-sig')
+    print("所有图片的分类结果已保存至 'valset/valset2_所有图片分类结果.csv'")
 
 
     return {
@@ -285,8 +285,8 @@ def evaluate_model(model_path, test_dir, anomaly_dir=None, batch_size=32):
 if __name__ == '__main__':
     # 配置路径
     model_path = "classify/best_model_final.pth"  # 训练好的模型路径
-    test_dir = "模拟用户使用的测试图片/所有图片"  # 测试图片文件夹
-    anomaly_dir = "模拟用户使用的测试图片/异常图片"  # 测试集中的异常图片文件夹
+    test_dir = "模拟用户使用的测试图片/所有图片/验证集2-all"  # 测试图片文件夹
+    anomaly_dir = "模拟用户使用的测试图片/异常图片/验证集2-tumor"  # 测试集中的异常图片文件夹
 
     # 评估模型
     results = evaluate_model(model_path, test_dir, anomaly_dir)
