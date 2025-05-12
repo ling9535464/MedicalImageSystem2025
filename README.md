@@ -4,8 +4,8 @@
 
 # 项目 README
 项目所需数据集与SAM预训练模型：
-通过网盘分享的文件：项目所需数据集与SAM预训练模型.zip
-链接: https://pan.baidu.com/s/1cIBdUT53uCPyLIUxSsaElg?pwd=ggcs 提取码: ggcs
+通过网盘分享的文件：项目所需数据集与SAM预训练模型(1).zip
+链接: https://pan.baidu.com/s/1OD7fEcIYB-sr2yWF_lqNJg?pwd=cu6s 提取码: cu6s 
 
 ---
 
@@ -151,6 +151,7 @@ project/
 ├── 2finetune_medsam.py
 ├── 2run_medsam_anomaly.py
 ├── 3grading.py
+├── 3test.py
 ├── image_dataset/
 │   ├── 用于训练的所有图片/
 │   ├── 用于训练的异常图片/
@@ -180,5 +181,4 @@ project/
 
 
 
----
 
